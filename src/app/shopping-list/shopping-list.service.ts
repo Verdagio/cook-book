@@ -27,7 +27,7 @@ export class ShoppingListService {
   addIngredient(ingredient: Ingredient){
     this.ingredients.push(ingredient);
     this.ingredientsUpdated.emit(this.ingredients.slice());
-    //this.loggingService.logMessage(`Added ingredient ${ingredient.name} to shopping list`);
+    this.loggingService.logMessage(`Added ingredient ${ingredient.name} to shopping list`);
   }
 
   addIngredients(newIngredients: Ingredient[]){
@@ -36,7 +36,7 @@ export class ShoppingListService {
       var index = this.ingredients.findIndex(item => item.name === ingredient.name);
       if(index > -1){
         this.ingredients[index].amount += ingredient.amount;
-        //this.loggingService.logMessage(`Updated ${ingredient.name} to amount: ${ingredient.amount}`);
+        this.loggingService.logMessage(`Updated ${ingredient.name} to amount: ${ingredient.amount}`);
       } else {
         this.addIngredient(ingredient);
       }
@@ -51,6 +51,6 @@ export class ShoppingListService {
 
   updateIngredient(id: number, ingredient: Ingredient){
     this.ingredients[id] = ingredient;
-    //this.loggingService.logMessage(`Ingredient ${ingredient.name} updated`);
+    this.loggingService.logMessage(`Ingredient ${ingredient.name} updated`);
   }
 }
