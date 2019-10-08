@@ -11,6 +11,7 @@ import { LoggingService } from '../logging.service';
 export class ShoppingListService {
 
   ingredientsUpdated = new Subject<Ingredient[]>();
+  editingIngredient = new Subject<number>();
   private ingredients: Ingredient[] = [
     new Ingredient('Salt', 15),
     new Ingredient('Strong white Flour', 500),
@@ -24,6 +25,10 @@ export class ShoppingListService {
 
   getIngredients(): Ingredient[] {
     return this.ingredients.slice();
+  }
+
+  getIngredient(index: number): Ingredient {
+    return this.ingredients[index];
   }
 
   addIngredient(ingredient: Ingredient){
@@ -47,12 +52,14 @@ export class ShoppingListService {
 
   }
 
-  // removeIngredient(id: number){
-  //   this.ingredients.splice(id, 1);
-  // }
-
-  updateIngredient(id: number, ingredient: Ingredient){
-    this.ingredients[id] = ingredient;
-    this.loggingService.logMessage(`Ingredient ${ingredient.name} updated`);
+  updateIngredient(index: number, newIngredient: Ingredient){
+    this.ingredients[index] = newIngredient;
+    this.ingredientsUpdated.next(this.ingredients.slice());
   }
+
+  deleteIngredient(index: number){
+    this.ingredients.splice(index, 1);
+    this.ingredientsUpdated.next(this.ingredients.slice());
+  }
+
 }
