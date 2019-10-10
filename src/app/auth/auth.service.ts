@@ -5,6 +5,7 @@ import { throwError, Subject, BehaviorSubject } from 'rxjs'
 
 import { config } from '../../config/firebase-config';
 import { User } from './user.model';
+import { Router } from '@angular/router';
 
 
 
@@ -23,9 +24,10 @@ export interface AuthResponse {
 })
 export class AuthService {
   user = new BehaviorSubject<User>(null);
+  private expirationTimer: any;
 
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private router: Router) { }
 
   signUp(email: string, password: string) {
     return this.http.post<AuthResponse>(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${config.firebase.apiKey}`, {
@@ -45,6 +47,47 @@ export class AuthService {
     }).pipe(catchError(this.handleError),
     tap(res => this.handleAuthentication(res)
     ));
+  }
+
+  autoSignIn(){
+    const userData: {
+      email: string;
+      id: string;
+      _token: string;
+      _tokenExpirationDate: string;
+    } = JSON.parse(localStorage.getItem('userData'));
+
+    if(!userData){
+      return;
+    }
+    const loadUser = new User(
+      userData.email,
+      userData.id,
+      userData._token,
+      new Date(userData._tokenExpirationDate)
+    );
+
+    if(loadUser.token){
+      this.user.next(loadUser);
+      const expirationTime = new Date(userData._tokenExpirationDate).getTime() - new Date().getTime();
+      this.autoSignOut(expirationTime);
+    }
+  }
+
+  signOut(){
+    this.user.next(null);
+    this.router.navigate(['/auth']);
+    localStorage.removeItem('userData');
+    if(this.expirationTimer){
+      clearTimeout(this.expirationTimer);
+    }
+    this.expirationTimer = null;
+  }
+
+  autoSignOut(expirationDuration: number){
+    this.expirationTimer = setTimeout(() => {
+      this.signOut();
+    },expirationDuration);
   }
 
   private handleError(errorResponse: HttpErrorResponse){
@@ -74,6 +117,9 @@ export class AuthService {
 
   private handleAuthentication(res: AuthResponse){
     const expirationDate = new Date(new Date().getTime() + +res.expiresIn * 1000);
-    this.user.next(new User(res.email, res.localId, res.idToken, expirationDate));
+    const user = new User(res.email, res.localId, res.idToken, expirationDate)
+    this.user.next(user);
+    this.autoSignOut(+res.expiresIn * 1000);
+    localStorage.setItem('userData', JSON.stringify(user));
   }
 }
