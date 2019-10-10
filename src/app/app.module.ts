@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -20,6 +20,9 @@ import { RecipeEditComponent } from './recipes/recipe-edit/recipe-edit.component
 import { LoggingService } from './logging.service';
 import { RecipeService } from './recipes/recipe.service';
 import { DataStoreService } from './shared/data-store.service';
+import { AuthComponent } from './auth/auth.component';
+import { LoadingIconComponent } from './shared/loading-icon/loading-icon.component';
+import { InterceptorService } from './auth/interceptor.service';
 
 @NgModule({
   declarations: [
@@ -33,7 +36,9 @@ import { DataStoreService } from './shared/data-store.service';
     ShoppingEditComponent,
     DropdownDirective,
     RecipeStartComponent,
-    RecipeEditComponent
+    RecipeEditComponent,
+    AuthComponent,
+    LoadingIconComponent
   ],
   imports: [
     BrowserModule,
@@ -46,7 +51,12 @@ import { DataStoreService } from './shared/data-store.service';
     ShoppingListService,
     LoggingService,
     RecipeService,
-    DataStoreService
+    DataStoreService,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: InterceptorService,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })
