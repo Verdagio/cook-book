@@ -1,9 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ComponentFactoryResolver, ViewChild, OnDestroy } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Router } from '@angular/router';
+
+import { Observable, Subscription } from 'rxjs';
 
 import { AuthService, AuthResponse } from './auth.service';
-import { Router } from '@angular/router';
+import { AlertComponent } from '../shared/alert/alert.component';
+import { DynamicViewDirective } from '../shared/dynamic-view.directive';
+
+
 
 
 
@@ -13,15 +18,24 @@ import { Router } from '@angular/router';
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css']
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent implements OnInit, OnDestroy {
+  private closeSub: Subscription;
+  @ViewChild(DynamicViewDirective) alertHost: DynamicViewDirective;
   registerNew: boolean = false;
   isLoading: boolean = false;
   error: string = null;
 
 
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router, private componentFactoryResolver: ComponentFactoryResolver) { }
 
   ngOnInit() {
+  }
+
+  ngOnDestroy(){
+    if(this.closeSub){
+      this.closeSub.unsubscribe();
+    }
+
   }
 
   onSwitchMode(){
@@ -46,10 +60,28 @@ export class AuthComponent implements OnInit {
       this.router.navigate(['/recipes']);
     }, err => {
       console.log(err);
-      this.error = err;
+      this.showErrorAlert(err);
       this.isLoading = false;
     });
 
     form.reset();
+  }
+  onHandleError(){
+    this.error = null;
+  }
+
+  private showErrorAlert(e: string){
+    const alertCompFact = this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
+    const viewContRef = this.alertHost.viewContainerRef;
+
+    viewContRef.clear();
+    const componentRef = viewContRef.createComponent(alertCompFact);
+    componentRef.instance.message = e;
+    this.closeSub = componentRef.instance.close.subscribe(
+      () => {
+        this.closeSub.unsubscribe();
+        viewContRef.clear();
+      }
+    )
   }
 }
